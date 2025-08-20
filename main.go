@@ -91,7 +91,7 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type returnValid struct {
-		Valid bool `json:"valid"`
+		BodyText string `json:"cleaned_body"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -105,9 +105,17 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 400, "Chirp is too long")
 	}
 
-	validResponse := returnValid{
-		Valid: true,
+	badWordMap := map[string]struct{}{
+		"kerfuffle": {},
+		"sharbert":  {},
+		"fornax":    {},
 	}
+	
+	cleanedBody := badWordReplacement(params.Body, badWordMap)
+	validResponse := returnValid{
+		BodyText: cleanedBody,
+	}
+
 	respondWithJSON(w, 200, validResponse)
 }
 
