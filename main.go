@@ -70,6 +70,34 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		w.Write(data)
 	}
+	if len(params.Body) > 140 {
+		respBody := returnVals{
+			Error: "Chirp is too long",
+		}
+		data, err := json.Marshal(respBody)
+		if err != nil {
+			log.Printf("Error marshalling JSON: %s", err)
+			w.WriteHeader(500)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(400)
+		w.Write(data)
+	}
+	validResponse := returnVals{
+		Valid: true,
+	}
+
+	data, err := json.Marshal(validResponse)
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write(data)
 }
 
 func main() {
