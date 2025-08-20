@@ -44,7 +44,6 @@ func (cfg *apiConfig) handleReset(w http.ResponseWriter, r *http.Request) {
 func respondWithError(w http.ResponseWriter, code int, msg string) {
 	type returnError struct {
 		Error string `json:"error"`
-		Valid bool   `json:"valid"`
 	}
 	respError := returnError{
 		Error: msg,
@@ -60,64 +59,42 @@ func respondWithError(w http.ResponseWriter, code int, msg string) {
 	w.Write(data)
 }
 
-func handleValidate(w http.ResponseWriter, r *http.Request) {
-	type parameters struct {
-		Body string `json:"body"`
-	}
-
-	type returnVals struct {
-		Error string `json:"error"`
-		Valid bool   `json:"valid"`
-	}
-
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err := decoder.Decode(&params)
-	if err != nil {
-		repBody := returnVals{
-			Error: "Something went wrong",
-		}
-
-		data, err := json.Marshal(repBody)
-		if err != nil {
-			log.Printf("Error marshalling JSON: %s", err)
-			w.WriteHeader(500)
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(500)
-		w.Write(data)
-	}
-
-	if len(params.Body) > 140 {
-		respBody := returnVals{
-			Error: "Chirp is too long",
-		}
-		data, err := json.Marshal(respBody)
-		if err != nil {
-			log.Printf("Error marshalling JSON: %s", err)
-			w.WriteHeader(500)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(400)
-		w.Write(data)
-		return
-	}
-
-	validResponse := returnVals{
-		Valid: true,
-	}
-	data, err := json.Marshal(validResponse)
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	data, err := json.Marshal(payload)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
 		w.WriteHeader(500)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(code)
 	w.Write(data)
+}
+
+func handleValidate(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Body string `json:"body"`
+	}
+
+	type returnValid struct {
+		Valid bool `json:"valid"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, 500, "something went wrong")
+	}
+
+	if len(params.Body) > 140 {
+		respondWithError(w, 400, "Chirp is too long")
+	}
+
+	validResponse := returnValid{
+		Valid: true,
+	}
+	respondWithJSON(w, 200, validResponse)
 }
 
 func main() {
