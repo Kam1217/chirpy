@@ -70,6 +70,7 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		w.Write(data)
 	}
+
 	if len(params.Body) > 140 {
 		respBody := returnVals{
 			Error: "Chirp is too long",
@@ -85,10 +86,10 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		w.Write(data)
 	}
+
 	validResponse := returnVals{
 		Valid: true,
 	}
-
 	data, err := json.Marshal(validResponse)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
@@ -103,6 +104,7 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 func main() {
 	apiCfg := apiConfig{}
 	mux := http.NewServeMux()
+	mux.HandleFunc("POST/api/validate_chirp", handleValidate)
 	mux.HandleFunc("GET /api/healthz", handleHealth)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handleHits)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handleReset)
