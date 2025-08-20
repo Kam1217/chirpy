@@ -81,10 +81,10 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(500)
 			return
 		}
-
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(400)
 		w.Write(data)
+		return
 	}
 
 	validResponse := returnVals{
@@ -104,7 +104,7 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 func main() {
 	apiCfg := apiConfig{}
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST/api/validate_chirp", handleValidate)
+	mux.HandleFunc("POST /api/validate_chirp", handleValidate)
 	mux.HandleFunc("GET /api/healthz", handleHealth)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handleHits)
 	mux.HandleFunc("POST /admin/reset", apiCfg.handleReset)
