@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"sync/atomic"
 )
@@ -37,6 +39,26 @@ func (cfg *apiConfig) handleHits(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *apiConfig) handleReset(w http.ResponseWriter, r *http.Request) {
 	cfg.fileserverHits.Store(0)
+}
+
+func handleValidate(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Body string `json:"body"`
+	}
+
+	type returnVals struct {
+		Error string `json:"error"`
+		Valid bool   `json:"valid"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		log.Printf("Error decoding parameters: %s", err)
+		w.WriteHeader(500)
+		return
+	}
 }
 
 func main() {
