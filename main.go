@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync/atomic"
 )
 
@@ -69,6 +70,19 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(data)
+}
+
+func badWordReplacement(msg string, badWords map[string]struct{}) string {
+	splitText := strings.Split(msg, " ")
+	for i, word := range splitText {
+		for badWord := range badWords {
+			if strings.ToLower(word) == badWord {
+				splitText[i] = "****"
+			}
+		}
+	}
+	cleanWord := strings.Join(splitText, " ")
+	return cleanWord
 }
 
 func handleValidate(w http.ResponseWriter, r *http.Request) {
