@@ -55,9 +55,20 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		log.Printf("Error decoding parameters: %s", err)
+		repBody := returnVals{
+			Error: "Something went wrong",
+		}
+
+		data, err := json.Marshal(repBody)
+		if err != nil {
+			log.Printf("Error marshalling JSON: %s", err)
+			w.WriteHeader(500)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(500)
-		return
+		w.Write(data)
 	}
 }
 
