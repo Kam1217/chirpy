@@ -239,6 +239,30 @@ func (cfg *apiConfig) handleGetChirp(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *apiConfig) handleGetOneChirp(w http.ResponseWriter, r *http.Request) {
 	path := r.PathValue("chirpID")
+	chirpID, err := uuid.Parse(path)
+	if err != nil {
+		respondWithError(w, 400, "something went wrong")
+		return
+	}
+
+	chirp, err := cfg.db.GetChirp(r.Context(), chirpID)
+	if err == sql.ErrNoRows {
+		respondWithError(w, 404, "cannot find chirp")
+		return
+	}
+	if err != nil {
+		respondWithError(w, 500, "something went wrong")
+		return
+	}
+
+	response := chirpResponse{
+		ID:        chirpID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body:      chirp.Body,
+		UserID:    chirp.UserID,
+	}
+	respondWithJSON(w, 200, response)
 }
 
 func main() {
@@ -253,6 +277,7 @@ func main() {
 
 	apiCfg := apiConfig{db: dbQueries, platform: platform}
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handleGetOneChirp)
 	mux.HandleFunc("GET /api/chirps", apiCfg.handleGetChirp)
 	mux.HandleFunc("POST /api/chirps", apiCfg.handleChirp)
 	mux.HandleFunc("POST /api/users", apiCfg.handleUsers)
