@@ -188,6 +188,15 @@ func (cfg *apiConfig) handleChirp(w http.ResponseWriter, r *http.Request) {
 	if msg.Body == "" {
 		respondWithError(w, 400, "chirp cannot be empty")
 	}
+
+	data, err := cfg.db.CreateChirp(r.Context(), database.CreateChirpParams{
+		Body:   msg.Body,
+		UserID: msg.UserID,
+	})
+	if err != nil {
+		respondWithError(w, 500, "failed to create chirp")
+	}
+	respondWithJSON(w, 201, data)
 }
 
 func main() {
@@ -202,6 +211,7 @@ func main() {
 
 	apiCfg := apiConfig{db: dbQueries, platform: platform}
 	mux := http.NewServeMux()
+	mux.HandleFunc("POST /api/chirps", apiCfg.handleChirp)
 	mux.HandleFunc("POST /api/users", apiCfg.handleUsers)
 	mux.HandleFunc("POST /api/validate_chirp", handleValidate)
 	mux.HandleFunc("GET /api/healthz", handleHealth)
