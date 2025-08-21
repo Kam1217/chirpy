@@ -172,6 +172,24 @@ func (cfg *apiConfig) handleUsers(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, 201, user)
 }
 
+func (cfg *apiConfig) handleChirp(w http.ResponseWriter, r *http.Request) {
+	type chirp struct {
+		Body   string
+		UserID uuid.UUID
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	msg := chirp{}
+	err := decoder.Decode(&msg)
+	if err != nil {
+		respondWithError(w, 500, "something went wrong")
+	}
+
+	if msg.Body == "" {
+		respondWithError(w, 400, "chirp cannot be empty")
+	}
+}
+
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
