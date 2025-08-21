@@ -20,6 +20,7 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
+	platform       string
 }
 
 type User struct {
@@ -55,7 +56,16 @@ func (cfg *apiConfig) handleHits(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cfg *apiConfig) handleReset(w http.ResponseWriter, r *http.Request) {
+	if cfg.platform != "dev" {
+		respondWithError(w, 403, "Forbidden")
+		return
+	}
 	cfg.fileserverHits.Store(0)
+	err := cfg.db.DeleteUsers(r.Context())
+	if err != nil {
+		respondWithError(w, 500, "failed to delete users")
+	}
+	w.WriteHeader(200)
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
@@ -165,13 +175,14 @@ func (cfg *apiConfig) handleUsers(w http.ResponseWriter, r *http.Request) {
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
+	platform := os.Getenv("PLATFORM")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal("failed to open a connection to the database:", err)
 	}
 	dbQueries := database.New(db)
 
-	apiCfg := apiConfig{db: dbQueries}
+	apiCfg := apiConfig{db: dbQueries, platform: platform}
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/users", apiCfg.handleUsers)
 	mux.HandleFunc("POST /api/validate_chirp", handleValidate)
