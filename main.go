@@ -237,6 +237,10 @@ func (cfg *apiConfig) handleGetChirp(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, 200, msg)
 }
 
+func (cfg *apiConfig) handleGetOneChirp(w http.ResponseWriter, r *http.Request) {
+	path := r.PathValue("chirpID")
+}
+
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
