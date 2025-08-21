@@ -1,18 +1,23 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync/atomic"
 
+	"github.com/Kam1217/chirpy/internal/database"
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
+	db             *database.Queries
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -122,7 +127,15 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	apiCfg := apiConfig{}
+	godotenv.Load()
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal("failed to open a connection to the database:", err)
+	}
+	dbQueries := database.New(db)
+
+	apiCfg := apiConfig{db: dbQueries}
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/validate_chirp", handleValidate)
 	mux.HandleFunc("GET /api/healthz", handleHealth)
