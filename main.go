@@ -173,6 +173,7 @@ func main() {
 
 	apiCfg := apiConfig{db: dbQueries}
 	mux := http.NewServeMux()
+	mux.HandleFunc("POST /api/users", apiCfg.handleUsers)
 	mux.HandleFunc("POST /api/validate_chirp", handleValidate)
 	mux.HandleFunc("GET /api/healthz", handleHealth)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handleHits)
