@@ -135,7 +135,7 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, 200, validResponse)
 }
 
-func handleUsers(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handleUsers(w http.ResponseWriter, r *http.Request) {
 	type emailUser struct {
 		Email string `json:"email"`
 	}
@@ -147,7 +147,19 @@ func handleUsers(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 500, "something went wrong")
 	}
 
-	
+	data, err := cfg.db.CreateUser(r.Context(), eUser.Email)
+	if err != nil {
+		respondWithError(w, 500, "failed to create user")
+	}
+
+	user := User{
+		ID:        data.ID,
+		CreatedAt: data.CreatedAt,
+		UpdatedAt: data.UpdatedAt,
+		Email:     data.Email,
+	}
+
+	respondWithJSON(w, 201, user)
 }
 
 func main() {
