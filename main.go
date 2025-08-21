@@ -30,6 +30,14 @@ type User struct {
 	Email     string    `json:"email"`
 }
 
+type chirpResponse struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	UserID    uuid.UUID `json:"user_id"`
+}
+
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cfg.fileserverHits.Add(1)
@@ -174,8 +182,8 @@ func (cfg *apiConfig) handleUsers(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *apiConfig) handleChirp(w http.ResponseWriter, r *http.Request) {
 	type chirp struct {
-		Body   string
-		UserID uuid.UUID
+		Body   string    `json:"body"`
+		UserID uuid.UUID `json:"user_id"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -196,7 +204,16 @@ func (cfg *apiConfig) handleChirp(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		respondWithError(w, 500, "failed to create chirp")
 	}
-	respondWithJSON(w, 201, data)
+
+	response := chirpResponse{
+		ID:        data.ID,
+		CreatedAt: data.CreatedAt,
+		UpdatedAt: data.UpdatedAt,
+		Body:      data.Body,
+		UserID:    data.UserID,
+	}
+
+	respondWithJSON(w, 201, response)
 }
 
 func main() {
