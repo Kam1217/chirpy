@@ -9,8 +9,10 @@ import (
 	"os"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	"github.com/Kam1217/chirpy/internal/database"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -18,6 +20,13 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	db             *database.Queries
+}
+
+type User struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Email     string    `json:"email"`
 }
 
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -124,6 +133,21 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, 200, validResponse)
+}
+
+func handleUsers(w http.ResponseWriter, r *http.Request) {
+	type emailUser struct {
+		Email string `json:"email"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	eUser := emailUser{}
+	err := decoder.Decode(&eUser)
+	if err != nil {
+		respondWithError(w, 500, "something went wrong")
+	}
+
+	
 }
 
 func main() {
