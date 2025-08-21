@@ -2,7 +2,9 @@ package auth
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,4 +23,8 @@ func CheckPasswordHash(password, hash string) error {
 		return fmt.Errorf("could not compare password: %w", err)
 	}
 	return nil
+}
+
+func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
+	return "", nil
 }
