@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"sync/atomic"
+
+	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
@@ -110,7 +112,7 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 		"sharbert":  {},
 		"fornax":    {},
 	}
-	
+
 	cleanedBody := badWordReplacement(params.Body, badWordMap)
 	validResponse := returnValid{
 		BodyText: cleanedBody,
