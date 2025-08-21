@@ -216,6 +216,27 @@ func (cfg *apiConfig) handleChirp(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, 201, response)
 }
 
+func (cfg *apiConfig) handleGetChirp(w http.ResponseWriter, r *http.Request) {
+	chirps, err := cfg.db.GetChirps(r.Context())
+	if err != nil {
+		respondWithError(w, 500, "something went wrong")
+	}
+
+	var msg []chirpResponse
+
+	for _, chirp := range chirps {
+		response := chirpResponse{
+			ID:        chirp.ID,
+			CreatedAt: chirp.CreatedAt,
+			UpdatedAt: chirp.UpdatedAt,
+			Body:      chirp.Body,
+			UserID:    chirp.UserID,
+		}
+		msg = append(msg, response)
+	}
+	respondWithJSON(w, 200, msg)
+}
+
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
@@ -228,6 +249,7 @@ func main() {
 
 	apiCfg := apiConfig{db: dbQueries, platform: platform}
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/chirps", apiCfg.handleGetChirp)
 	mux.HandleFunc("POST /api/chirps", apiCfg.handleChirp)
 	mux.HandleFunc("POST /api/users", apiCfg.handleUsers)
 	mux.HandleFunc("POST /api/validate_chirp", handleValidate)
