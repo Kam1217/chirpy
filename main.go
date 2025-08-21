@@ -277,6 +277,10 @@ func (cfg *apiConfig) handleGetOneChirp(w http.ResponseWriter, r *http.Request) 
 	respondWithJSON(w, 200, response)
 }
 
+func (cfg *apiConfig) handleLogin(w http.ResponseWriter, r *http.Request) {
+
+}
+
 func main() {
 	godotenv.Load()
 	dbURL := os.Getenv("DB_URL")
