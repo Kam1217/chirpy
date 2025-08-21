@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Kam1217/chirpy/internal/auth"
 	"github.com/Kam1217/chirpy/internal/database"
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
@@ -24,10 +25,11 @@ type apiConfig struct {
 }
 
 type User struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
+	ID             uuid.UUID `json:"id"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+	Email          string    `json:"email"`
+	HashedPassword string    `json:"hashed_password"`
 }
 
 type chirpResponse struct {
@@ -153,19 +155,29 @@ func handleValidate(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, 200, validResponse)
 }
 
-func (cfg *apiConfig) handleUsers(w http.ResponseWriter, r *http.Request) {
-	type emailUser struct {
-		Email string `json:"email"`
+func (cfg *apiConfig) handleCreateUser(w http.ResponseWriter, r *http.Request) {
+	type userDetailsRequest struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
-	eUser := emailUser{}
-	err := decoder.Decode(&eUser)
+	userRequest := userDetailsRequest{}
+	err := decoder.Decode(&userRequest)
 	if err != nil {
 		respondWithError(w, 500, "something went wrong")
 	}
 
-	data, err := cfg.db.CreateUser(r.Context(), eUser.Email)
+	hashedPassword, err := auth.HashPassword(userRequest.Password)
+	if err != nil {
+		respondWithError(w, 500, "failed to create user")
+	}
+
+	data, err := cfg.db.CreateUser(r.Context(), database.CreateUserParams{
+		Email:          userRequest.Email,
+		HashedPassword: hashedPassword,
+	})
+
 	if err != nil {
 		respondWithError(w, 500, "failed to create user")
 	}
@@ -280,7 +292,7 @@ func main() {
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handleGetOneChirp)
 	mux.HandleFunc("GET /api/chirps", apiCfg.handleGetChirp)
 	mux.HandleFunc("POST /api/chirps", apiCfg.handleChirp)
-	mux.HandleFunc("POST /api/users", apiCfg.handleUsers)
+	mux.HandleFunc("POST /api/users", apiCfg.handleCreateUser)
 	mux.HandleFunc("POST /api/validate_chirp", handleValidate)
 	mux.HandleFunc("GET /api/healthz", handleHealth)
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handleHits)
