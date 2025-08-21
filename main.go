@@ -278,7 +278,37 @@ func (cfg *apiConfig) handleGetOneChirp(w http.ResponseWriter, r *http.Request) 
 }
 
 func (cfg *apiConfig) handleLogin(w http.ResponseWriter, r *http.Request) {
+	type userDetailsRequest struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	userRequest := userDetailsRequest{}
+	err := decoder.Decode(&userRequest)
+	if err != nil {
+		respondWithError(w, 500, "something went wrong")
+		return
+	}
+	user, err := cfg.db.GetUser(r.Context(), userRequest.Email)
+	if err != nil {
+		respondWithError(w, 401, "Incorrect email or password")
+		return
+	}
 
+	err = auth.CheckPasswordHash(userRequest.Password, user.HashedPassword)
+	if err != nil {
+		respondWithError(w, 401, "Incorrect email or password")
+		return
+	}
+
+	response := User{
+		ID:        user.ID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Email:     user.Email,
+	}
+
+	respondWithJSON(w, 200, response)
 }
 
 func main() {
@@ -293,6 +323,7 @@ func main() {
 
 	apiCfg := apiConfig{db: dbQueries, platform: platform}
 	mux := http.NewServeMux()
+	mux.HandleFunc("POST /api/login", apiCfg.handleLogin)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handleGetOneChirp)
 	mux.HandleFunc("GET /api/chirps", apiCfg.handleGetChirp)
 	mux.HandleFunc("POST /api/chirps", apiCfg.handleChirp)
